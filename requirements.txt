@@ -2,7 +2,8 @@ streamlit
 langchain-google-genai
 langchain-chroma
 langgraph
+langgraph-checkpoint-sqlite  # 👈 核心修复：补充记忆库专属包
 aiosqlite
 aiohttp
 langsmith
-pysqlite3-binary  # 解决云端 SQLite 版本过低的关键库
+pysqlite3-binary
