@@ -8,12 +8,12 @@ try:
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 except ImportError:
     pass # 本地运行如果没有装 pysqlite3 就忽略
-# ==========================================
-# 0. 开启 LangSmith 企业级监控 (必须放在最前面!)
-# ==========================================
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ.get("LANGSMITH_API_KEY", "")
-os.environ["LANGCHAIN_PROJECT"] = "techpulse" # 你的监控项目名称
+
+
+if "LANGCHAIN_API_KEY" in st.secrets:
+    os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]
+    os.environ["LANGCHAIN_TRACING_V2"] = st.secrets.get("LANGCHAIN_TRACING_V2", "true")
+    os.environ["LANGCHAIN_PROJECT"] = st.secrets.get("LANGCHAIN_PROJECT", "TechPulse_Agent_Cloud")
 
 import streamlit as st
 import time
