@@ -1,21 +1,26 @@
 import os
+import streamlit as st
+
 # ==========================================
-# 0. 云端环境 SQLite 兼容性补丁 (必须在最前面)
+# 0. 云端环境 SQLite 兼容性补丁
 # ==========================================
 try:
     __import__('pysqlite3')
     import sys
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 except ImportError:
-    pass # 本地运行如果没有装 pysqlite3 就忽略
+    pass 
 
-
+# ==========================================
+# 🌟 核心修复：从云端 Secrets 动态读取，绝不死写！
+# ==========================================
+# 这样写，云端会读取后台配置，本地运行时如果没配置就不会强行覆盖报错
 if "LANGCHAIN_API_KEY" in st.secrets:
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets.get("LANGCHAIN_TRACING_V2", "true")
     os.environ["LANGCHAIN_PROJECT"] = st.secrets.get("LANGCHAIN_PROJECT", "TechPulse_Agent_Cloud")
 
-import streamlit as st
+    
 import time
 import asyncio
 import aiosqlite 
