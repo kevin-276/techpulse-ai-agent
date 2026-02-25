@@ -1,0 +1,16 @@
+# 忽略本地数据库文件
+*.sqlite
+chroma_db/
+# 忽略可能的环境变量文件
+.env
+__pycache__/
+
+# 忽略带有明文秘钥的旧练习文件
+graph_agent.py
+persistent_agent1.py
+real_agent.py
+real_agent2.py
+JSON_Test.py
+agent_tools.py
+API_helloworld.py
+chroma_test.py
