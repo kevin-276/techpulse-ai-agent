@@ -82,7 +82,7 @@ def build_graph(api_key: str):
     async def search_github(query: str):
         """当本地记忆找不到时，使用此工具搜索 GitHub 并自动学习新知识。"""
         print(f"--- [Backend] 🌐 正在启动联网搜索: {query} ---")
-        url = f"https://api.github.com/search/repositories?q={query}"
+        url = f"https://api.github.com/search/repositories?q={query}&sort=stars&order=desc"
         # 从环境变量读取 Token，如果没配置，就提供一个空字符串防止报错
         # 🌟 修复点：更安全地读取和拼装 Headers
         github_token = os.environ.get("GITHUB_TOKEN", "").strip()
