@@ -80,11 +80,14 @@ def build_graph(api_key: str):
     # 🔧 工具 B：联网搜 GitHub 并自动学习 (读 + 写)
     @tool
     async def search_github(query: str):
-        """当本地记忆找不到时，使用此工具搜索 GitHub 并自动学习新知识。"""
+        """
+        当本地记忆找不到时，使用此工具搜索 GitHub 并自动学习新知识。
+        ⚠️ 警告：参数 query 必须且只能是【纯粹的项目英文名称】（例如 "openclaw", "react"），绝对不允许包含 "stars"、"多少"、"是什么" 等任何附加的询问意图词汇！
+        """
         print(f"--- [Backend] 🌐 正在启动联网搜索: {query} ---")
         url = f"https://api.github.com/search/repositories?q={query}&sort=stars&order=desc"
-        # 从环境变量读取 Token，如果没配置，就提供一个空字符串防止报错
-        # 🌟 修复点：更安全地读取和拼装 Headers
+        
+        # 🌟 安全地读取和拼装 Headers
         github_token = os.environ.get("GITHUB_TOKEN", "").strip()
         headers = {
             "User-Agent": "Mozilla/5.0"
@@ -92,13 +95,18 @@ def build_graph(api_key: str):
         if github_token:
             headers["Authorization"] = f"Bearer {github_token}"
             
-        
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, headers=headers, timeout=10) as response:
-                    if response.status != 200: return f"Error: Status {response.status}"
+                    # 🌟 修复点：让真正的错误显形，并勒令大模型停手，防止死循环
+                    if response.status != 200: 
+                        error_text = await response.text()
+                        print(f"--- [Backend] ❌ GitHub API 报错: {response.status} - {error_text}")
+                        return f"GitHub搜索失败 (HTTP {response.status}): {error_text}。⚠️系统严厉警告：绝对不允许再次调用 search_github！请立刻停止检索，把这个错误原因直接告诉用户！"
+                    
                     data = await response.json()
-                    if 'items' not in data: return f"Error: {data}"
+                    if 'items' not in data: 
+                        return f"Error: 无效的返回格式 {data}。⚠️请停止重试。"
                     
                     results = []
                     docs_to_learn = [] # 用于准备存入数据库的列表
@@ -113,7 +121,6 @@ def build_graph(api_key: str):
                         results.append(content_str)
                         
                         # 构造 Document 对象给向量数据库吃
-                        # 把名字和描述拼在一起作为“语义内容”，把仓库名作为“元数据”
                         doc = Document(
                             page_content=f"{repo_name} 是一个 GitHub 项目。描述：{desc}",
                             metadata={"repo": repo_name}
@@ -123,12 +130,12 @@ def build_graph(api_key: str):
                     # 🌟 核心动作：自动学习！将新知识写入 ChromaDB
                     if docs_to_learn:
                         print(f"--- [Backend] 💾 正在自动学习！将 {len(docs_to_learn)} 个新项目写入本地知识库 ---")
-                        # 异步添加文档到向量库
                         await local_vector_store.aadd_documents(docs_to_learn)
                     
                     return "\n".join(results)
         except Exception as e:
-            return f"Search Network Error: {e}"
+            return f"Search Network Error: {e}。⚠️请停止重试。"
+
 
     # --- 后续组装图逻辑保持不变 ---
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=api_key, temperature=0)
