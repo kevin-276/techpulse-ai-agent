@@ -84,11 +84,14 @@ def build_graph(api_key: str):
         print(f"--- [Backend] 🌐 正在启动联网搜索: {query} ---")
         url = f"https://api.github.com/search/repositories?q={query}"
         # 从环境变量读取 Token，如果没配置，就提供一个空字符串防止报错
-        github_token = os.environ.get("GITHUB_TOKEN", "")
+        # 🌟 修复点：更安全地读取和拼装 Headers
+        github_token = os.environ.get("GITHUB_TOKEN", "").strip()
         headers = {
-            "Authorization": f"Bearer {github_token}" if github_token else "",
             "User-Agent": "Mozilla/5.0"
         }
+        if github_token:
+            headers["Authorization"] = f"Bearer {github_token}"
+            
         
         try:
             async with aiohttp.ClientSession() as session:
